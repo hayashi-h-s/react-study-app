@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { auth, provider, storage } from "../firebase";
-import { signInWithPopup } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from "firebase/auth";
 import styles from "./Auth.module.css";
 import {
   Avatar,
@@ -58,6 +62,15 @@ const useStyles = makeStyles((theme) => ({
 
 const Auth: React.FC = () => {
   const classes = useStyles();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLogin, setIsLogin] = useState(true);
+  const signUpEmail = async () => {
+    await createUserWithEmailAndPassword(auth, email, password);
+  };
+  const signInEmail = async () => {
+    await signInWithEmailAndPassword(auth, email, password);
+  };
   const signInGoogle = async () => {
     // googleのサインインポップアップを表示
     await signInWithPopup(auth, provider).catch((err) => alert(err.message));
@@ -72,7 +85,7 @@ const Auth: React.FC = () => {
             <LockOutlinedIcon />
           </Avatar>
           <Typography component="h1" variant="h5">
-            Sign in
+            {isLogin ? "Login" : "Register"}
           </Typography>
           <form className={classes.form} noValidate>
             <TextField
@@ -85,6 +98,10 @@ const Auth: React.FC = () => {
               name="email"
               autoComplete="email"
               autoFocus
+              value={email}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setEmail(e.target.value);
+              }}
             />
             <TextField
               variant="outlined"
@@ -96,16 +113,56 @@ const Auth: React.FC = () => {
               type="password"
               id="password"
               autoComplete="current-password"
+              value={password}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setPassword(e.target.value);
+              }}
             />
             <Button
-              type="submit"
+              // type="submit" //ボタンとして描画されます https://developer.mozilla.org/ja/docs/Web/HTML/Element/input/submit
               fullWidth
               variant="contained"
               color="primary"
               className={classes.submit}
+              startIcon={<EmailIcon />}
+              onClick={
+                isLogin
+                  ? async () => {
+                      try {
+                        await signInEmail();
+                      } catch (err: any) {
+                        alert(err.message);
+                      }
+                    }
+                  : async () => {
+                      try {
+                        await signUpEmail();
+                      } catch (err: any) {
+                        alert(err.message);
+                      }
+                    }
+              }
             >
-              Sign In
+              {isLogin ? "Login" : "Register"}
             </Button>
+            <Grid container>
+              <Grid item xs>
+                <span
+                  className={styles.login_reset}
+                  // onClick={() => setOpenModal(true)}
+                >
+                  Forgot password ?
+                </span>
+              </Grid>
+              <Grid item>
+                <span
+                  className={styles.login_toggleMode}
+                  onClick={() => setIsLogin(!isLogin)}
+                >
+                  {isLogin ? "Create new account ?" : "Back to login"}
+                </span>
+              </Grid>
+            </Grid>
             <Button
               // type="submit"  これを削除しないと表示されない
               fullWidth

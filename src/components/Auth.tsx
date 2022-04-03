@@ -214,6 +214,12 @@ const Auth: React.FC = () => {
               }}
             />
             <Button
+              // validate機能
+              disabled={
+                isLogin
+                  ? !email || password.length < 6
+                  : !username || !email || password.length < 6 || !avatarImage
+              }
               // type="submit" //ボタンとして描画されます https://developer.mozilla.org/ja/docs/Web/HTML/Element/input/submit
               fullWidth
               variant="contained"

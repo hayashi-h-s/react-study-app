@@ -24,21 +24,22 @@ const App: React.FC = () => {
         dispatch(logout());
       }
     });
-    return () => { // cleanUp 再レンダリングで呼び出される
+    return () => {
+      // cleanUp 再レンダリングで呼び出される
       unSub();
     };
   }, [dispatch]);
-    return (
-      <>
-        {user.uid ? (
-          <div className={styles.app}>
-            <Feed />
-          </div>
-        ) : (
-          <Auth />
-        )}
-      </>
-    );
+  return (
+    <>
+      {user.uid ? (
+        <div className={styles.app}>
+          <Feed />
+        </div>
+      ) : (
+        <Auth />
+      )}
+    </>
+  );
 };
 
 export default App;

@@ -4,6 +4,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
+  updateProfile,
 } from "firebase/auth";
 import styles from "./Auth.module.css";
 import {
@@ -24,6 +25,15 @@ import CameraIcon from "@material-ui/icons/Camera";
 import EmailIcon from "@material-ui/icons/Email";
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import AccountCircleIcon from "@material-ui/icons/AccountCircle";
+import {
+  getDownloadURL,
+  ref,
+  uploadBytes,
+  uploadBytesResumable,
+  uploadString,
+} from "firebase/storage";
+import { updateUserProfile } from "../features/userSlice";
+import { useDispatch } from "react-redux";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -61,12 +71,19 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Auth: React.FC = () => {
+  const dispatch = useDispatch();
   const classes = useStyles();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [avatarImage, setAvatarImage] = useState<File | null>(null); // null か File型
   const [isLogin, setIsLogin] = useState(true);
-  const signUpEmail = async () => {
-    await createUserWithEmailAndPassword(auth, email, password);
+  const onChangeImageHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files![0]) {
+      // 1つだけの選択 ! はnonNull であること
+      setAvatarImage(e.target.files![0]);
+      e.target.value = ""; // 連続して同じファイルを選択した時は、初期化しないと反応しない
+    }
   };
   const signInEmail = async () => {
     await signInWithEmailAndPassword(auth, email, password);
@@ -75,6 +92,44 @@ const Auth: React.FC = () => {
     // googleのサインインポップアップを表示
     await signInWithPopup(auth, provider).catch((err) => alert(err.message));
   };
+  const signUpEmail = async () => {
+    const authUser = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    let url = "";
+    if (avatarImage) {
+      // FireBaseの仕様で同じファイルネームにさせない処理
+      const S =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      const N = 16;
+      const randomChar = Array.from(crypto.getRandomValues(new Uint32Array(N)))
+        .map((n) => S[n % S.length])
+        .join("");
+      // 43億通り
+      const fileName = randomChar + "_" + avatarImage.name;
+
+      const storageRef = ref(storage, `avatars/${fileName}`);
+      await uploadBytesResumable(storageRef, avatarImage);
+      await getDownloadURL(storageRef).then((downloadURL) => {
+        console.log("File available at", downloadURL);
+        url = downloadURL;
+      });
+
+      updateProfile(authUser.user, {
+        displayName: "Jane Q. User",
+        photoURL: "https://example.com/jane-q-user/profile.jpg",
+      });
+      dispatch(
+        updateUserProfile({
+          displayName: username,
+          photoUrl: url,
+        })
+      );
+    }
+  };
+
   return (
     <Grid container component="main" className={classes.root}>
       <CssBaseline />
@@ -147,6 +202,7 @@ const Auth: React.FC = () => {
             </Button>
             <Grid container>
               <Grid item xs>
+                {/* xsだと数ごとに等間隔で並ぶ ex = 50% と 50% */}
                 <span
                   className={styles.login_reset}
                   // onClick={() => setOpenModal(true)}

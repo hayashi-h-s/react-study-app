@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { auth, provider, storage } from "../firebase";
 import {
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   updateProfile,
@@ -35,6 +36,19 @@ import {
 } from "firebase/storage";
 import { updateUserProfile } from "../features/userSlice";
 import { useDispatch } from "react-redux";
+
+// マテリアルUIからコピペ
+function getModalStyle() {
+  // 50で角の左上を中心にする
+  const top = 50;
+  const left = 50;
+  // カードを中心の持ってくる処理
+  return {
+    top: `${top}%`,
+    left: `${left}%`,
+    transform: `translate(-${top}%, -${left}%)`,
+  };
+}
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -79,6 +93,20 @@ const Auth: React.FC = () => {
   const [username, setUsername] = useState("");
   const [avatarImage, setAvatarImage] = useState<File | null>(null); // null か File型
   const [isLogin, setIsLogin] = useState(true);
+  const [openModal, setOpenModal] = React.useState(false); // Modalが開いているか否か
+  const [resetEmail, setResetEmail] = useState(""); // Modal内のリセット用のパスワードを保持
+
+  const sendResetEmail = async (e: React.MouseEvent<HTMLElement>) => {
+    await sendPasswordResetEmail(auth,resetEmail) // passwordリセット機能
+      .then(() => {
+        setOpenModal(false);
+        setResetEmail("");
+      })
+      .catch((err) => {
+        alert(err.message);
+        setResetEmail("");
+      });
+  };
   const onChangeImageHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files![0]) {
       // 1つだけの選択 ! はnonNull であること

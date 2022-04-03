@@ -22,7 +22,9 @@ import {
   Typography,
   makeStyles,
   IconButton,
+  Modal,
 } from "@material-ui/core";
+import SendIcon from "@material-ui/icons/Send";
 import CameraIcon from "@material-ui/icons/Camera";
 import EmailIcon from "@material-ui/icons/Email";
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
@@ -83,6 +85,15 @@ const useStyles = makeStyles((theme) => ({
   submit: {
     margin: theme.spacing(3, 0, 2),
   },
+  modal: {
+    outline: "none",
+    position: "absolute",
+    width: 400,
+    borderRadius: 10,
+    backgroundColor: "white",
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing(10),
+  },
 }));
 
 const Auth: React.FC = () => {
@@ -97,7 +108,7 @@ const Auth: React.FC = () => {
   const [resetEmail, setResetEmail] = useState(""); // Modal内のリセット用のパスワードを保持
 
   const sendResetEmail = async (e: React.MouseEvent<HTMLElement>) => {
-    await sendPasswordResetEmail(auth,resetEmail) // passwordリセット機能
+    await sendPasswordResetEmail(auth, resetEmail) // passwordリセット機能
       .then(() => {
         setOpenModal(false);
         setResetEmail("");
@@ -279,7 +290,7 @@ const Auth: React.FC = () => {
                 {/* xsだと数ごとに等間隔で並ぶ ex = 50% と 50% */}
                 <span
                   className={styles.login_reset}
-                  // onClick={() => setOpenModal(true)}
+                  onClick={() => setOpenModal(true)}
                 >
                   Forgot password ?
                 </span>
@@ -298,6 +309,7 @@ const Auth: React.FC = () => {
               fullWidth
               variant="contained"
               color="primary"
+              startIcon={<CameraIcon />}
               className={classes.submit}
               onClick={signInGoogle}
             >
@@ -305,6 +317,27 @@ const Auth: React.FC = () => {
             </Button>
           </form>
         </div>
+        <Modal open={openModal} onClose={() => setOpenModal(false)}>
+          <div style={getModalStyle()} className={classes.modal}>
+            <div className={styles.login_modal}>
+              <TextField
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                type="email"
+                name="email"
+                label="Reset E-mail"
+                value={resetEmail}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setResetEmail(e.target.value);
+                }}
+              />
+              <IconButton onClick={sendResetEmail}>
+                <SendIcon />
+              </IconButton>
+            </div>
+          </div>
+        </Modal>
       </Grid>
     </Grid>
   );

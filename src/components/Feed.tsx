@@ -61,7 +61,7 @@ const Feed: React.FC = () => {
           ログアウト
         </button>
         <TweetInput />
-        {posts[0]?.id && (
+        {posts[0]?.id && (　//投稿がない場合の処理
           <>
             {posts.map((post) => (
               <Post

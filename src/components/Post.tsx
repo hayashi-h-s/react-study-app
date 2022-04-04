@@ -1,6 +1,20 @@
-import { Avatar } from "@material-ui/core";
-import React from "react";
+import { Avatar, makeStyles } from "@material-ui/core";
+import React, { useEffect } from "react";
 import styles from "./Post.module.css";
+import { useState } from "react";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "../firebase";
+import { useSelector } from "react-redux";
+import { selectUser } from "../features/userSlice";
+import { getDocs } from "firebase/firestore";
+import SendIcon from "@material-ui/icons/Send";
 
 interface PROPS {
   postId: string;
@@ -11,7 +25,68 @@ interface PROPS {
   username: string;
 }
 
+interface COMMENT {
+  id: string;
+  avatar: string;
+  text: string;
+  timestamp: any;
+  username: string;
+}
+
+const useStyles = makeStyles((theme) => ({
+  small: {
+    width: theme.spacing(3),
+    height: theme.spacing(3),
+    marginRight: theme.spacing(1),
+  },
+}));
+
 const Post: React.FC<PROPS> = (props) => {
+  const classes = useStyles();
+  const user = useSelector(selectUser);
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState<COMMENT[]>([
+    {
+      id: "",
+      avatar: "",
+      text: "",
+      username: "",
+      timestamp: null,
+    },
+  ]);
+
+  useEffect(() => {
+    const ref = collection(db, "posts", props.postId, "comments");
+    const q = query(ref, orderBy("timestamp", "desc")); // 時刻の降順
+    const unSub = onSnapshot(q, (snapshot) => {
+      setComments(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          avatar: doc.data().avatar,
+          text: doc.data().text,
+          username: doc.data().username,
+          timestamp: doc.data().timestamp,
+        }))
+      );
+    });
+    return () => {
+      // アンマウントされる時に実行されるクリーンアップ関数
+      unSub();
+    };
+  }, [props.postId]); // 投稿が更新されると再度実行
+
+  const newComment = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const ref = collection(db, "posts", props.postId, "comments"); // postに紐づくデータ
+    addDoc(ref, {
+      avatar: user.photoUrl,
+      text: comment,
+      timestamp: serverTimestamp(),
+      username: user.displayName,
+    });
+    setComment("");
+  };
+
   return (
     <div className={styles.post}>
       <div className={styles.post_avatar}>
@@ -37,6 +112,39 @@ const Post: React.FC<PROPS> = (props) => {
             <img src={props.image} alt="tweet" />
           </div>
         )}
+        {comments.map((com) => (
+          <div key={com.id} className={styles.post_comment}>
+            <Avatar src={com.avatar} className={classes.small} />
+
+            <span className={styles.post_commentUser}>@{com.username}</span>
+            <span className={styles.post_commentText}>{com.text} </span>
+            <span className={styles.post_headerTime}>
+              {new Date(com.timestamp?.toDate()).toLocaleString()}
+            </span>
+          </div>
+        ))}
+        <form onSubmit={newComment}>
+          <div className={styles.post_form}>
+            <input
+              className={styles.post_input}
+              type="text"
+              placeholder="Type new comment..."
+              value={comment}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setComment(e.target.value)
+              }
+            />
+            <button
+              disabled={!comment}
+              className={
+                comment ? styles.post_button : styles.post_buttonDisable
+              }
+              type="submit"
+            >
+              <SendIcon className={styles.post_sendIcon} />
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -153,7 +153,6 @@ const Auth: React.FC = () => {
       const storageRef = ref(storage, `avatars/${fileName}`);
       await uploadBytesResumable(storageRef, avatarImage);
       await getDownloadURL(storageRef).then((downloadURL) => {
-        console.log("File available at", downloadURL);
         url = downloadURL;
       });
     }

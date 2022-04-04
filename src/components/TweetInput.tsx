@@ -37,23 +37,26 @@ const TweetInput: React.FC = () => {
       const fileName = randomChar + "_" + tweetImage.name;
       const storageRef = ref(storage, `images/${fileName}`);
       const upLoadTweetImage = uploadBytesResumable(storageRef, tweetImage);
+
       upLoadTweetImage.on(
         // storageのstateの変化に対する後処理
         "state_changed",
-        () => {}, // Progresu,
+        () => {}, // Progress,
         (err) => {
           alert(err.message);
         },
         async () => {
-          await getDownloadURL(ref(storage, `images`)).then((url) => {
-            addDoc(collection(db, "posts"), {
-              avatar: user.photoUrl,
-              image: url,
-              text: tweetMsg,
-              timestamp: serverTimestamp(), // 現在時刻の追加
-              username: user.displayName,
-            });
-          });
+          await getDownloadURL(ref(storage, `images/${fileName}`)).then(
+            (url) => {
+              addDoc(collection(db, "posts"), {
+                avatar: user.photoUrl,
+                image: url,
+                text: tweetMsg,
+                timestamp: serverTimestamp(), // 現在時刻の追加
+                username: user.displayName,
+              });
+            }
+          );
         }
       );
     } else {

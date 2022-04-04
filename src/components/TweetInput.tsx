@@ -14,7 +14,7 @@ import AddAPhotoIcon from "@material-ui/icons/AddAPhoto";
 import App from "../App";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 
-const TweetInput = () => {
+const TweetInput: React.FC = () => {
   const user = useSelector(selectUser);
   const [tweetImage, setTweetImage] = useState<File | null>(null);
   const [tweetMsg, setTweetMsg] = useState("");

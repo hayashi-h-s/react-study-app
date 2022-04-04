@@ -1,4 +1,4 @@
-import { Avatar } from "@material-ui/core";
+import { Avatar, IconButton, Button } from "@material-ui/core";
 import styles from "./TweetInput.module.css";
 import { useSelector } from "react-redux";
 import { selectUser } from "../features/userSlice";
@@ -10,6 +10,7 @@ import {
   Firestore,
   serverTimestamp,
 } from "firebase/firestore";
+import AddAPhotoIcon from "@material-ui/icons/AddAPhoto";
 import App from "../App";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 
@@ -25,12 +26,7 @@ const TweetInput = () => {
     }
   };
   const sendTweet = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // submitを行った場合にrefreshを防ぐ
-    addDoc(collection(db, "cities"), {
-      name: "Tokyo",
-      country: "Japan",
-    });
-
+    e.preventDefault(); // submitを行った場合にrefresh(再読み込み)を防ぐ
     if (tweetImage) {
       const S =
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -73,16 +69,51 @@ const TweetInput = () => {
     setTweetMsg("");
   };
   return (
-    <div className={styles.tweet_form}>
-      <Avatar
-        className={styles.tweet_avatar}
-        src={user.photoUrl}
-        onClick={async () => {
-          // await auth.signOut();
-          await sendTweet;
-        }}
-      />
-    </div>
+    <>
+      <form onSubmit={sendTweet}>
+        <div className={styles.tweet_form}>
+          <Avatar
+            className={styles.tweet_avatar}
+            src={user.photoUrl}
+            onClick={async () => {
+              await auth.signOut();
+            }}
+          />
+          <input
+            className={styles.tweet_input}
+            placeholder="What's happening?"
+            type="text"
+            autoFocus
+            value={tweetMsg}
+            onChange={(e) => setTweetMsg(e.target.value)}
+          />
+          <IconButton>
+            <label>
+              <AddAPhotoIcon
+                className={
+                  tweetImage ? styles.tweet_addIconLoaded : styles.tweet_addIcon
+                }
+              />
+              {/* ファイルダイアログを立ち上げる */}
+              <input
+                className={styles.tweet_hiddenIcon}
+                type="file"
+                onChange={onChangeImageHandler}
+              />
+            </label>
+          </IconButton>
+        </div>
+        <Button
+          type="submit"
+          disabled={!tweetMsg}
+          className={
+            tweetMsg ? styles.tweet_sendBtn : styles.tweet_sendDisableBtn
+          }
+        >
+          Tweet
+        </Button>
+      </form>
+    </>
   );
 };
 
